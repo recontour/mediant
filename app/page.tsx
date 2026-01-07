@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { EmblaCarouselType } from "embla-carousel";
 import Image from "next/image";
+import { FaSpotify } from "react-icons/fa";
 import Visualizer from "./components/Visualizer";
 
 // --- DATA ---
@@ -15,6 +16,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Among Us - Mediant.mp3",
     cover: "/thumbnails/Cover of Among Us by Mediant.jpg",
     color: "#ff0000",
+    spotify: "https://open.spotify.com/track/00mW3iKmQcA9By72L7pn46",
   },
   {
     id: 1,
@@ -23,6 +25,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Chakma - Mediant.mp3",
     cover: "/thumbnails/Cover of Chakma by Mediant.jpg",
     color: "#ffbf00",
+    spotify: "https://open.spotify.com/track/14Rhp0ItTeC0oKG0jbB1WW",
   },
   {
     id: 2,
@@ -32,6 +35,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of Naive - Aizan, Professor (ofc) Remix by Mediant, Aizan, Professor (ofc).jpg",
     color: "#80ff00",
+    spotify: "https://open.spotify.com/track/78j562eiIkuIgS9BGy7xW2",
   },
   {
     id: 3,
@@ -40,6 +44,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Samammish - Mediant.mp3",
     cover: "/thumbnails/Cover of Samammish by Mediant.jpg",
     color: "#00ff40",
+    spotify: "https://open.spotify.com/track/1NJP0fEr3BvQkzapa5Vsi4",
   },
   {
     id: 4,
@@ -48,6 +53,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Stance - Mediant.mp3",
     cover: "/thumbnails/Cover of Stance by Mediant.jpg",
     color: "#00ffff",
+    spotify: "https://open.spotify.com/track/1rXxJseZ7XkVJ27Leu3SdH",
   },
   {
     id: 5,
@@ -56,6 +62,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Stance - Mixed - Mediant.mp3",
     cover: "/thumbnails/Cover of Stance - Mixed by Mediant.jpg",
     color: "#0040ff",
+    spotify: "https://open.spotify.com/track/2Fy1WgF9kGlpNdjchXKyk3",
   },
   {
     id: 6,
@@ -64,6 +71,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Tangent - Mediant.mp3",
     cover: "/thumbnails/Cover of Tangent by Mediant.jpg",
     color: "#8000ff",
+    spotify: "https://open.spotify.com/track/4jWQENCy0RYNRBgN4xIKOi",
   },
   {
     id: 7,
@@ -73,6 +81,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of Tiamora - Mediant Remix by The Digital Blonde, Mediant.jpg",
     color: "#ff00bf",
+    spotify: "https://open.spotify.com/track/6pbzZJLh2CJTdKC3xQZf5k",
   },
   {
     id: 8,
@@ -81,6 +90,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - We Are Satoshi - Mediant.mp3",
     cover: "/thumbnails/Cover of We Are Satoshi by Mediant.jpg",
     color: "#ff0040",
+    spotify: "https://open.spotify.com/track/25B1W4tn4Ass0JTj4e3pRV",
   },
   {
     id: 9,
@@ -90,6 +100,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of We Are Satoshi - Tomy Wahl Remix by Mediant, Tomy Wahl.jpg",
     color: "#ff8000",
+    spotify: "https://open.spotify.com/track/1qyd7fUo2Tc5C9UlLeCWfM",
   },
 ];
 
@@ -278,7 +289,7 @@ export default function Home() {
         {/* PLAYER CARD */}
         <div className="px-6 mb-6 pointer-events-auto">
           <div
-            className="backdrop-blur-xl bg-black/40 border border-white/10 rounded-xl p-4 flex items-center gap-5 shadow-2xl transition-all duration-500"
+            className="backdrop-blur-xl bg-black/10 border border-white/10 rounded-xl p-4 flex items-center gap-5 shadow-2xl transition-all duration-500"
             style={{
               boxShadow: isPlaying
                 ? `0 0 40px -10px ${activeTrack.color}50`
@@ -301,7 +312,7 @@ export default function Home() {
                 }`}
               />
 
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
                 {isLoading ? (
                   <svg
                     className="animate-spin w-6 h-6 text-white"
@@ -357,6 +368,19 @@ export default function Home() {
                 {isLoading ? "LOADING..." : activeTrack.artist}
               </p>
             </div>
+
+            {/* Spotify Button */}
+            {activeTrack.spotify && (
+              <a
+                href={activeTrack.spotify}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto p-3 rounded-full bg-black/20 hover:bg-black/40 text-[#1DB954] hover:text-[#1ed760] transition-colors border border-white/5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FaSpotify size={24} />
+              </a>
+            )}
           </div>
         </div>
 
