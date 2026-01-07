@@ -109,12 +109,22 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const [showEnter, setShowEnter] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowEnter(true), 2000);
-    return () => clearTimeout(timer);
+    // Sequence the animations
+    const t1 = setTimeout(() => setShowWelcome(true), 500);
+    const t2 = setTimeout(() => setShowHint(true), 1500);
+    const t3 = setTimeout(() => setShowEnter(true), 3000);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, []);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -325,10 +335,20 @@ export default function Home() {
           className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md cursor-pointer transition-colors duration-500 hover:bg-black/80"
         >
           <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+            <h1
+              className={`text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight transition-opacity duration-1000 ${
+                showWelcome ? "opacity-100" : "opacity-0"
+              }`}
+            >
               Welcome
             </h1>
-            <p className="text-neutral-400 font-thin italic tracking-widest text-sm md:text-base">
+            <p
+              className={`text-neutral-400 font-thin italic tracking-widest text-sm md:text-base transition-all duration-1000 transform ${
+                showHint
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 -translate-x-10"
+              }`}
+            >
               Best experienced with headphones
             </p>
           </div>
