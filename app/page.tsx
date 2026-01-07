@@ -381,7 +381,7 @@ export default function Home() {
             href="https://www.instagram.com/mediant__official?igsh=Zm0yeGxudGdvcGcy"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center w-12 h-12 rounded-full bg-black/1 backdrop-blur-md border border-white/10 text-white/90 hover:bg-black/10 hover:scale-105 transition-all duration-300 shadow-lg"
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-black/1 backdrop-blur-sm border border-white/10 text-white/90 hover:bg-black/10 hover:scale-105 transition-all duration-300 shadow-lg"
           >
             <FaInstagram size={24} />
           </a>
@@ -390,7 +390,7 @@ export default function Home() {
         {/* PLAYER CARD */}
         <div className="px-6 mb-6 pointer-events-auto">
           <div
-            className="backdrop-blur-xl bg-black/1 border border-white/10 rounded-2xl p-3 flex items-center gap-3 shadow-2xl transition-all duration-500"
+            className="backdrop-blur-sm bg-black/1 border border-white/10 rounded-2xl p-3 flex items-center gap-3 shadow-2xl transition-all duration-500"
             style={{
               boxShadow: isPlaying
                 ? `0 0 40px -10px ${activeTrack.color}50`
