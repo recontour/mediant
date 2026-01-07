@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { EmblaCarouselType } from "embla-carousel";
 import Image from "next/image";
-import { FaSpotify } from "react-icons/fa";
+import { FaSpotify } from "react-icons/fa"; // Make sure to install: npm install react-icons
 import Visualizer from "./components/Visualizer";
 
 // --- DATA ---
@@ -16,7 +16,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Among Us - Mediant.mp3",
     cover: "/thumbnails/Cover of Among Us by Mediant.jpg",
     color: "#ff0000",
-    spotify: "https://open.spotify.com/track/00mW3iKmQcA9By72L7pn46",
+    spotify: "https://open.spotify.com/track/0",
   },
   {
     id: 1,
@@ -25,7 +25,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Chakma - Mediant.mp3",
     cover: "/thumbnails/Cover of Chakma by Mediant.jpg",
     color: "#ffbf00",
-    spotify: "https://open.spotify.com/track/14Rhp0ItTeC0oKG0jbB1WW",
+    spotify: "https://open.spotify.com/track/1",
   },
   {
     id: 2,
@@ -35,7 +35,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of Naive - Aizan, Professor (ofc) Remix by Mediant, Aizan, Professor (ofc).jpg",
     color: "#80ff00",
-    spotify: "https://open.spotify.com/track/78j562eiIkuIgS9BGy7xW2",
+    spotify: "https://open.spotify.com/track/2",
   },
   {
     id: 3,
@@ -44,7 +44,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Samammish - Mediant.mp3",
     cover: "/thumbnails/Cover of Samammish by Mediant.jpg",
     color: "#00ff40",
-    spotify: "https://open.spotify.com/track/1NJP0fEr3BvQkzapa5Vsi4",
+    spotify: "https://open.spotify.com/track/3",
   },
   {
     id: 4,
@@ -53,7 +53,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Stance - Mediant.mp3",
     cover: "/thumbnails/Cover of Stance by Mediant.jpg",
     color: "#00ffff",
-    spotify: "https://open.spotify.com/track/1rXxJseZ7XkVJ27Leu3SdH",
+    spotify: "https://open.spotify.com/track/4",
   },
   {
     id: 5,
@@ -62,7 +62,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Stance - Mixed - Mediant.mp3",
     cover: "/thumbnails/Cover of Stance - Mixed by Mediant.jpg",
     color: "#0040ff",
-    spotify: "https://open.spotify.com/track/2Fy1WgF9kGlpNdjchXKyk3",
+    spotify: "https://open.spotify.com/track/5",
   },
   {
     id: 6,
@@ -71,7 +71,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Tangent - Mediant.mp3",
     cover: "/thumbnails/Cover of Tangent by Mediant.jpg",
     color: "#8000ff",
-    spotify: "https://open.spotify.com/track/4jWQENCy0RYNRBgN4xIKOi",
+    spotify: "https://open.spotify.com/track/6",
   },
   {
     id: 7,
@@ -81,7 +81,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of Tiamora - Mediant Remix by The Digital Blonde, Mediant.jpg",
     color: "#ff00bf",
-    spotify: "https://open.spotify.com/track/6pbzZJLh2CJTdKC3xQZf5k",
+    spotify: "https://open.spotify.com/track/7",
   },
   {
     id: 8,
@@ -90,7 +90,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - We Are Satoshi - Mediant.mp3",
     cover: "/thumbnails/Cover of We Are Satoshi by Mediant.jpg",
     color: "#ff0040",
-    spotify: "https://open.spotify.com/track/25B1W4tn4Ass0JTj4e3pRV",
+    spotify: "https://open.spotify.com/track/8",
   },
   {
     id: 9,
@@ -100,7 +100,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of We Are Satoshi - Tomy Wahl Remix by Mediant, Tomy Wahl.jpg",
     color: "#ff8000",
-    spotify: "https://open.spotify.com/track/1qyd7fUo2Tc5C9UlLeCWfM",
+    spotify: "https://open.spotify.com/track/9",
   },
 ];
 
@@ -115,17 +115,17 @@ export default function Home() {
     loop: true,
     align: "center",
     skipSnaps: false,
-    dragFree: false,
+    dragFree: false, // Strict snapping helps stability
+    containScroll: false, // Allows the 'center' logic to work perfectly
   });
 
-  // --- 1. VISUAL SCALER (Appearance Only) ---
-  const [tweenValues, setTweenValues] = useState<number[]>([]);
-
+  // --- 1. VISUAL SCALER (Direct DOM for Performance) ---
   const onScroll = useCallback((emblaApi: EmblaCarouselType) => {
     const engine = emblaApi.internalEngine();
     const scrollProgress = emblaApi.scrollProgress();
+    const slides = emblaApi.slideNodes();
 
-    const styles = emblaApi.scrollSnapList().map((scrollSnap, index) => {
+    emblaApi.scrollSnapList().forEach((scrollSnap, index) => {
       let diffToTarget = scrollSnap - scrollProgress;
       const slidesInSnap = engine.slideRegistry[index];
 
@@ -141,10 +141,50 @@ export default function Home() {
           });
         }
       });
-      const tweenValue = 1 - Math.abs(diffToTarget * 2);
-      return Math.max(0, Math.min(1, tweenValue));
+
+      // MATH: Create a bell curve for the scale
+      const tweenValue = 1 - Math.abs(diffToTarget * 1.5); // 1.5 multiplier tightens the curve
+      const clampedTween = Math.max(0, Math.min(1, tweenValue));
+
+      // Scale: 0.85 (edges) -> 1.0 (center)
+      const scale = 0.85 + clampedTween * 0.15;
+      const opacity = 0.5 + clampedTween * 0.5;
+      const isCenter = clampedTween > 0.9; // Strict center check
+
+      const slideNode = slides[index];
+
+      // We set z-index so the center tile visually pops OVER the side tiles
+      slideNode.style.zIndex = isCenter ? "10" : "1";
+
+      const innerButton = slideNode.querySelector(
+        ".carousel-tile"
+      ) as HTMLElement;
+      const innerImage = slideNode.querySelector(
+        ".carousel-image"
+      ) as HTMLElement;
+
+      if (innerButton) {
+        // PERFORMANCE: Direct transform update.
+        // Ensure CSS does NOT have 'transition: all' or 'transition: transform'
+        innerButton.style.transform = `scale(${scale})`;
+        innerButton.style.opacity = `${opacity}`;
+
+        const trackColor = TRACKS[index].color;
+        if (isCenter) {
+          innerButton.style.border = `2px solid ${trackColor}`;
+          innerButton.style.boxShadow = `0 10px 40px -10px ${trackColor}60`;
+        } else {
+          innerButton.style.border = `1px solid ${trackColor}20`;
+          innerButton.style.boxShadow = `none`;
+        }
+      }
+
+      if (innerImage) {
+        innerImage.style.filter = isCenter
+          ? "none"
+          : "grayscale(100%) brightness(50%)";
+      }
     });
-    setTweenValues(styles);
   }, []);
 
   useEffect(() => {
@@ -155,7 +195,6 @@ export default function Home() {
   }, [emblaApi, onScroll]);
 
   // --- 2. AUDIO ENGINE & EVENT LISTENERS ---
-  // Initialize Audio Object Once
   useEffect(() => {
     if (!audioRef.current && typeof window !== "undefined") {
       audioRef.current = new Audio();
@@ -169,18 +208,18 @@ export default function Home() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Sync React state with Audio Events
     const setPlay = () => setIsPlaying(true);
     const setPause = () => setIsPlaying(false);
     const setLoading = () => setIsLoading(true);
     const setReady = () => setIsLoading(false);
+
+    // Auto-Next Logic
     const handleEnded = () => {
-      // Find next track index
       const currentIndex = TRACKS.findIndex((t) => t.id === activeTrack.id);
       const nextIndex = (currentIndex + 1) % TRACKS.length;
       const nextTrack = TRACKS[nextIndex];
 
-      // Update state and scroll carousel
+      // Update active track AND scroll to it
       setActiveTrack(nextTrack);
       if (emblaApi) emblaApi.scrollTo(nextIndex);
     };
@@ -206,19 +245,16 @@ export default function Home() {
     };
   }, [activeTrack, emblaApi]);
 
-  // --- 3. TRACK LOADER (Effect) ---
-  // This watches 'activeTrack'. If it changes, it loads the new one.
+  // --- 3. TRACK LOADER ---
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Only load if it's actually a different file
     if (!audio.src.includes(activeTrack.url)) {
       setIsLoading(true);
       audio.src = activeTrack.url;
       audio.volume = 1.0;
 
-      // If we have interacted previously, autoplay the new track
       if (hasInteracted) {
         audio.play().catch((e) => console.log("Playback failed", e));
       }
@@ -234,15 +270,13 @@ export default function Home() {
     const selectedTrack = TRACKS[index];
 
     if (!isCentered) {
-      // CASE 1: Clicked a side tile -> Just Scroll
+      // Just Scroll
       emblaApi.scrollTo(index);
     } else {
-      // CASE 2: Clicked the center tile
+      // Action
       if (selectedTrack.id === activeTrack.id) {
-        // Sub-case 2A: It's the current song -> Toggle Play/Pause
         togglePlay();
       } else {
-        // Sub-case 2B: It's a new song (scrolled to but not clicked yet) -> Load it
         setActiveTrack(selectedTrack);
       }
     }
@@ -306,7 +340,7 @@ export default function Home() {
         {/* PLAYER CARD */}
         <div className="px-6 mb-6 pointer-events-auto">
           <div
-            className="backdrop-blur-xl bg-black/10 border border-white/10 rounded-xl p-4 flex items-center gap-5 shadow-2xl transition-all duration-500"
+            className="backdrop-blur-xl bg-black/5 border border-white/10 rounded-2xl p-3 flex items-center gap-3 shadow-2xl transition-all duration-500"
             style={{
               boxShadow: isPlaying
                 ? `0 0 40px -10px ${activeTrack.color}50`
@@ -392,63 +426,51 @@ export default function Home() {
                 href={activeTrack.spotify}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-auto p-3 rounded-full bg-black/20 hover:bg-black/40 text-[#1DB954] hover:text-[#1ed760] transition-colors border border-white/5"
+                className="ml-auto p-3 rounded-full bg-white/5 hover:bg-white/10 text-[#1DB954] transition-all duration-300 border border-white/5 active:scale-95"
                 onClick={(e) => e.stopPropagation()}
               >
-                <FaSpotify size={24} />
+                <FaSpotify size={22} />
               </a>
             )}
           </div>
         </div>
 
-        {/* SMART CAROUSEL */}
-        <section className="w-full pb-8 pt-2 pointer-events-auto">
+        {/* CAROUSEL */}
+        <section className="w-full pb-4 pointer-events-auto">
           <div className="overflow-visible" ref={emblaRef}>
             <div className="flex touch-pan-y items-center">
               {TRACKS.map((track, index) => {
-                const scaleFactor = tweenValues[index] || 0;
-                const isCenter = scaleFactor > 0.8;
-
-                // LOGIC: Show loader ONLY if this specific track is the active one AND loading
                 const isThisTrackLoading =
                   isLoading && activeTrack.id === track.id;
                 const isThisTrackPlaying =
                   isPlaying && activeTrack.id === track.id;
+                const isSelected = activeTrack.id === track.id;
 
                 return (
+                  // Width: 65% ensures One Center + Two Side Edges on mobile
                   <div
                     key={track.id}
-                    className="flex-[0_0_30%] min-w-0 px-2 relative"
+                    className="flex-[0_0_30%] min-w-0 px-2 relative transition-all"
                   >
                     <button
                       onClick={() => handleTileClick(index)}
-                      className="relative w-full aspect-square rounded-sm overflow-hidden transition-all duration-75 ease-out"
-                      style={{
-                        transform: `scale(${0.8 + scaleFactor * 0.35})`,
-                        opacity: 0.4 + scaleFactor * 0.6,
-                        boxShadow:
-                          isCenter && (isThisTrackPlaying || isThisTrackLoading)
-                            ? `0 10px 30px -5px ${track.color}80`
-                            : "none",
-                        border: isCenter
-                          ? "2px solid rgba(255,255,255,0.8)"
-                          : "1px solid rgba(255,255,255,0.1)",
-                      }}
+                      className="carousel-tile relative w-full aspect-square rounded-sm overflow-hidden transition-colors duration-300"
+                      // NOTE: We REMOVED transition-all/transition-transform to prevent shaking.
+                      // Only opacity and border/colors are animated by CSS.
+                      // Transform is handled 100% by JS in onScroll.
                     >
                       <Image
                         src={track.cover}
                         alt={track.title}
                         fill
-                        className={`object-cover ${
-                          isCenter ? "" : "grayscale"
-                        }`}
+                        className="carousel-image object-cover transition-[filter] duration-300"
                       />
 
                       {/* LOADER */}
                       {isThisTrackLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20 backdrop-blur-sm">
                           <svg
-                            className="animate-spin w-8 h-8 text-white"
+                            className="animate-spin w-10 h-10 text-white"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -471,16 +493,31 @@ export default function Home() {
                       )}
 
                       {/* PLAY ICON (Center & Idle) */}
-                      {isCenter &&
+                      {isSelected &&
                         !isThisTrackPlaying &&
                         !isThisTrackLoading && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
                             <svg
-                              className="w-8 h-8 text-white/80 drop-shadow-md pl-1"
+                              className="w-12 h-12 text-white/90 drop-shadow-lg pl-1"
                               fill="currentColor"
                               viewBox="0 0 24 24"
                             >
                               <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        )}
+
+                      {/* PAUSE ICON (Center & Playing) */}
+                      {isSelected &&
+                        isThisTrackPlaying &&
+                        !isThisTrackLoading && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+                            <svg
+                              className="w-12 h-12 text-white/90 drop-shadow-lg"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                             </svg>
                           </div>
                         )}
