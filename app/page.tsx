@@ -268,7 +268,7 @@ export default function Home() {
           audioRef={audioRef}
           isPlaying={isPlaying}
           color={activeTrack.color}
-          yOffset={1.5}
+          yOffset={2}
         />
       )}
       <div

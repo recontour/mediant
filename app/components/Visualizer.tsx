@@ -19,7 +19,7 @@ function hexToRgb(hex: string) {
     : { r: 1, g: 1, b: 1 };
 }
 
-// --- SHADERS (Ultra-Mellow Version) ---
+// --- SHADERS (Mellow Treble / Deep Bass) ---
 const vertexShader = `
   uniform float u_time;
   uniform float u_treble;
@@ -89,9 +89,7 @@ const vertexShader = `
     float speed = 1.0 + (u_bass / 50.0); 
     float noise = 2.0 * pnoise(position + u_time * speed, vec3(10.0));
     
-    // --- THE MELLOW FIX ---
-    // Increased divisor from 60.0 to 400.0 (Massive dampening)
-    // Reduced multiplier from 1.2 to 0.5 (Softer spikes)
+    // Treble creates subtle texture spikes (Dampened to 400.0)
     float spikeHeight = (u_treble / 400.0) * (noise * 0.5);
     
     vec3 newPosition = position + normal * spikeHeight;
@@ -254,21 +252,23 @@ export default function Visualizer({
       }
       const avgTreble = trebleSum / 100;
 
-      // Color & Position Updates
+      // Color & Position
       const targetRgb = hexToRgb(colorRef.current);
       uniforms.u_red.value += (targetRgb.r - uniforms.u_red.value) * 0.05;
       uniforms.u_green.value += (targetRgb.g - uniforms.u_green.value) * 0.05;
       uniforms.u_blue.value += (targetRgb.b - uniforms.u_blue.value) * 0.05;
       mesh.position.y += (yOffsetRef.current - mesh.position.y) * 0.1;
 
-      // Physics
-      const scaleEffect = 1.0 + Math.pow(avgBass / 255, 2.0) * 0.6;
+      // --- PHYSICS UPDATE (The "Drama" Tweak) ---
+      // Base scale: 0.8 (Reduced from 1.0)
+      // Expansion: Multiplied by 0.9 (Increased from 0.6)
+      // Power: 2.5 (More exponential, requires actual bass beat to trigger)
+      const scaleEffect = 0.8 + Math.pow(avgBass / 255, 2.5) * 0.9;
       mesh.scale.setScalar(scaleEffect);
 
       uniforms.u_time.value = clock.getElapsedTime();
 
-      // --- SMOOTHER LERP ---
-      // Slowed down from 0.2 to 0.08 for very smooth transitions
+      // Smooth Treble / Bass LERP
       uniforms.u_treble.value = THREE.MathUtils.lerp(
         uniforms.u_treble.value,
         avgTreble,
