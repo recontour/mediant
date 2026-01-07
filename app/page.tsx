@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { EmblaCarouselType } from "embla-carousel";
 import Image from "next/image";
-import { FaSpotify } from "react-icons/fa"; // Make sure to install: npm install react-icons
+import { FaSpotify, FaInstagram } from "react-icons/fa"; // Make sure to install: npm install react-icons
 import Visualizer from "./components/Visualizer";
 
 // --- DATA ---
@@ -374,6 +374,18 @@ export default function Home() {
 
       {/* CONTENT UI */}
       <div className="relative z-40 flex flex-col h-full justify-end pb-safe pointer-events-none">
+        {/* SOCIAL BADGES */}
+        <div className="absolute top-6 left-6 pointer-events-auto">
+          <a
+            href="https://www.instagram.com/mediant__official?igsh=Zm0yeGxudGdvcGcy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-black/5 backdrop-blur-md border border-white/10 text-white/90 hover:bg-black/20 hover:scale-105 transition-all duration-300 shadow-lg"
+          >
+            <FaInstagram size={24} />
+          </a>
+        </div>
+
         {/* PLAYER CARD */}
         <div className="px-6 mb-6 pointer-events-auto">
           <div
