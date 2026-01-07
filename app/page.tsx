@@ -155,51 +155,56 @@ export default function Home() {
   }, [emblaApi, onScroll]);
 
   // --- 2. AUDIO ENGINE & EVENT LISTENERS ---
+  // Initialize Audio Object Once
   useEffect(() => {
     if (!audioRef.current && typeof window !== "undefined") {
       audioRef.current = new Audio();
       audioRef.current.crossOrigin = "anonymous";
-      audioRef.current.loop = false; // Disable loop to handle "ended" event manually
-
-      const audio = audioRef.current;
-
-      // Sync React state with Audio Events
-      const setPlay = () => setIsPlaying(true);
-      const setPause = () => setIsPlaying(false);
-      const setLoading = () => setIsLoading(true);
-      const setReady = () => setIsLoading(false);
-      const handleEnded = () => {
-        // Find next track index
-        const currentIndex = TRACKS.findIndex((t) => t.id === activeTrack.id);
-        const nextIndex = (currentIndex + 1) % TRACKS.length;
-        const nextTrack = TRACKS[nextIndex];
-
-        // Update state and scroll carousel
-        setActiveTrack(nextTrack);
-        if (emblaApi) emblaApi.scrollTo(nextIndex);
-      };
-
-      audio.addEventListener("play", setPlay);
-      audio.addEventListener("pause", setPause);
-      audio.addEventListener("waiting", setLoading);
-      audio.addEventListener("playing", setReady);
-      audio.addEventListener("canplay", setReady);
-      audio.addEventListener("ended", handleEnded);
-      audio.addEventListener("error", () => {
-        setReady();
-        setPause();
-      });
-
-      return () => {
-        audio.removeEventListener("play", setPlay);
-        audio.removeEventListener("pause", setPause);
-        audio.removeEventListener("waiting", setLoading);
-        audio.removeEventListener("playing", setReady);
-        audio.removeEventListener("canplay", setReady);
-        audio.removeEventListener("ended", handleEnded);
-      };
+      audioRef.current.loop = false;
     }
-  }, [activeTrack, emblaApi]); // Added dependencies for handleEnded logic
+  }, []);
+
+  // Attach Event Listeners
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // Sync React state with Audio Events
+    const setPlay = () => setIsPlaying(true);
+    const setPause = () => setIsPlaying(false);
+    const setLoading = () => setIsLoading(true);
+    const setReady = () => setIsLoading(false);
+    const handleEnded = () => {
+      // Find next track index
+      const currentIndex = TRACKS.findIndex((t) => t.id === activeTrack.id);
+      const nextIndex = (currentIndex + 1) % TRACKS.length;
+      const nextTrack = TRACKS[nextIndex];
+
+      // Update state and scroll carousel
+      setActiveTrack(nextTrack);
+      if (emblaApi) emblaApi.scrollTo(nextIndex);
+    };
+
+    audio.addEventListener("play", setPlay);
+    audio.addEventListener("pause", setPause);
+    audio.addEventListener("waiting", setLoading);
+    audio.addEventListener("playing", setReady);
+    audio.addEventListener("canplay", setReady);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("error", () => {
+      setReady();
+      setPause();
+    });
+
+    return () => {
+      audio.removeEventListener("play", setPlay);
+      audio.removeEventListener("pause", setPause);
+      audio.removeEventListener("waiting", setLoading);
+      audio.removeEventListener("playing", setReady);
+      audio.removeEventListener("canplay", setReady);
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [activeTrack, emblaApi]);
 
   // --- 3. TRACK LOADER (Effect) ---
   // This watches 'activeTrack'. If it changes, it loads the new one.
