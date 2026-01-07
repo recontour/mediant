@@ -109,7 +109,13 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showEnter, setShowEnter] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowEnter(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
@@ -316,21 +322,32 @@ export default function Home() {
       {!hasInteracted && (
         <div
           onClick={togglePlay}
-          className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md cursor-pointer transition-all duration-500 hover:bg-black/70"
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md cursor-pointer transition-colors duration-500 hover:bg-black/80"
         >
-          <div className="text-center animate-pulse group">
-            <div className="w-20 h-20 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-              <svg
-                className="w-8 h-8 text-white pl-1"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+              Welcome
+            </h1>
+            <p className="text-neutral-400 font-thin italic tracking-widest text-sm md:text-base">
+              Best experienced with headphones
+            </p>
+          </div>
+
+          <div
+            className={`transition-all duration-1000 transform ${
+              showEnter
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-8 pointer-events-none"
+            }`}
+          >
+            <div className="text-center animate-pulse group">
+              <div className="w-20 h-20 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform bg-white/5">
+                <p className="text-4xl">🎧</p>
+              </div>
+              <h2 className="text-xl font-bold tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-neutral-400">
+                Enter Experience
+              </h2>
             </div>
-            <h2 className="text-3xl font-bold tracking-[0.2em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-neutral-400">
-              Enter Experience
-            </h2>
           </div>
         </div>
       )}
