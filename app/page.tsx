@@ -6,6 +6,7 @@ import { EmblaCarouselType } from "embla-carousel";
 import Image from "next/image";
 import { FaSpotify, FaInstagram } from "react-icons/fa"; // Make sure to install: npm install react-icons
 import Visualizer from "./components/Visualizer";
+import icon from "./icon.png";
 
 // --- DATA ---
 const TRACKS = [
@@ -16,7 +17,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Among Us - Mediant.mp3",
     cover: "/thumbnails/Cover of Among Us by Mediant.jpg",
     color: "#ff0000",
-    spotify: "https://open.spotify.com/track/0",
+    spotify: "https://open.spotify.com/track/00mW3iKmQcA9By72L7pn46",
   },
   {
     id: 1,
@@ -25,7 +26,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Chakma - Mediant.mp3",
     cover: "/thumbnails/Cover of Chakma by Mediant.jpg",
     color: "#ffbf00",
-    spotify: "https://open.spotify.com/track/1",
+    spotify: "https://open.spotify.com/track/14Rhp0ItTeC0oKG0jbB1WW",
   },
   {
     id: 2,
@@ -35,7 +36,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of Naive - Aizan, Professor (ofc) Remix by Mediant, Aizan, Professor (ofc).jpg",
     color: "#80ff00",
-    spotify: "https://open.spotify.com/track/2",
+    spotify: "https://open.spotify.com/track/78j562eiIkuIgS9BGy7xW2",
   },
   {
     id: 3,
@@ -44,7 +45,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Samammish - Mediant.mp3",
     cover: "/thumbnails/Cover of Samammish by Mediant.jpg",
     color: "#00ff40",
-    spotify: "https://open.spotify.com/track/3",
+    spotify: "https://open.spotify.com/track/1NJP0fEr3BvQkzapa5Vsi4",
   },
   {
     id: 4,
@@ -53,7 +54,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Stance - Mediant.mp3",
     cover: "/thumbnails/Cover of Stance by Mediant.jpg",
     color: "#00ffff",
-    spotify: "https://open.spotify.com/track/4",
+    spotify: "https://open.spotify.com/track/1rXxJseZ7XkVJ27Leu3SdH",
   },
   {
     id: 5,
@@ -62,7 +63,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Stance - Mixed - Mediant.mp3",
     cover: "/thumbnails/Cover of Stance - Mixed by Mediant.jpg",
     color: "#0040ff",
-    spotify: "https://open.spotify.com/track/5",
+    spotify: "https://open.spotify.com/track/2Fy1WgF9kGlpNdjchXKyk3",
   },
   {
     id: 6,
@@ -71,7 +72,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - Tangent - Mediant.mp3",
     cover: "/thumbnails/Cover of Tangent by Mediant.jpg",
     color: "#8000ff",
-    spotify: "https://open.spotify.com/track/6",
+    spotify: "https://open.spotify.com/track/4jWQENCy0RYNRBgN4xIKOi",
   },
   {
     id: 7,
@@ -81,7 +82,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of Tiamora - Mediant Remix by The Digital Blonde, Mediant.jpg",
     color: "#ff00bf",
-    spotify: "https://open.spotify.com/track/7",
+    spotify: "https://open.spotify.com/track/6pbzZJLh2CJTdKC3xQZf5k",
   },
   {
     id: 8,
@@ -90,7 +91,7 @@ const TRACKS = [
     url: "/songs/SpotiDownloader.com - We Are Satoshi - Mediant.mp3",
     cover: "/thumbnails/Cover of We Are Satoshi by Mediant.jpg",
     color: "#ff0040",
-    spotify: "https://open.spotify.com/track/8",
+    spotify: "https://open.spotify.com/track/25B1W4tn4Ass0JTj4e3pRV",
   },
   {
     id: 9,
@@ -100,7 +101,7 @@ const TRACKS = [
     cover:
       "/thumbnails/Cover of We Are Satoshi - Tomy Wahl Remix by Mediant, Tomy Wahl.jpg",
     color: "#ff8000",
-    spotify: "https://open.spotify.com/track/9",
+    spotify: "https://open.spotify.com/track/1qyd7fUo2Tc5C9UlLeCWfM",
   },
 ];
 
@@ -469,16 +470,19 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Spotify Button */}
+            {/* Spotify Button - Redirects to the currently playing song */}
             {activeTrack.spotify && (
               <a
                 href={activeTrack.spotify}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-auto p-3 rounded-full bg-white/5 hover:bg-white/10 text-[#1DB954] transition-all duration-300 border border-white/5 active:scale-95"
+                className="ml-auto relative w-[56px] h-[56px] rounded-sm overflow-hidden border border-white/10 shadow-lg active:scale-95 transition-transform"
                 onClick={(e) => e.stopPropagation()}
               >
-                <FaSpotify size={22} />
+                <Image src={icon} alt="Spotify" fill className="object-cover" />
+                <div className="absolute bottom-0.5 right-0.5 text-[#1DB954] drop-shadow-md bg-black rounded-full">
+                  <FaSpotify size={16} />
+                </div>
               </a>
             )}
           </div>
