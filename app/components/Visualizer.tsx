@@ -19,7 +19,7 @@ function hexToRgb(hex: string) {
     : { r: 1, g: 1, b: 1 };
 }
 
-// --- SHADERS (Mellow Treble / Deep Bass) ---
+// --- SHADERS ---
 const vertexShader = `
   uniform float u_time;
   uniform float u_treble;
@@ -88,10 +88,7 @@ const vertexShader = `
   void main() {
     float speed = 1.0 + (u_bass / 50.0); 
     float noise = 2.0 * pnoise(position + u_time * speed, vec3(10.0));
-    
-    // Treble creates subtle texture spikes (Dampened to 400.0)
     float spikeHeight = (u_treble / 400.0) * (noise * 0.5);
-    
     vec3 newPosition = position + normal * spikeHeight;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
   }
@@ -101,8 +98,10 @@ const fragmentShader = `
   uniform float u_red;
   uniform float u_blue;
   uniform float u_green;
+  uniform float u_opacity; // New Opacity Control
+  
   void main() {
-      gl_FragColor = vec4(vec3(u_red, u_green, u_blue), 1.0);
+      gl_FragColor = vec4(vec3(u_red, u_green, u_blue), u_opacity);
   }
 `;
 
@@ -127,6 +126,9 @@ export default function Visualizer({
 
   const colorRef = useRef(color);
   const yOffsetRef = useRef(yOffset);
+
+  // Create a GROUP ref to rotate both meshes together
+  const groupRef = useRef<THREE.Group | null>(null);
 
   useEffect(() => {
     colorRef.current = color;
@@ -168,10 +170,11 @@ export default function Visualizer({
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
+    // --- BLOOM (Slightly reduced strength to handle filled mesh) ---
     const renderScene = new RenderPass(scene, camera);
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.6,
+      0.5,
       0.4,
       0.1
     );
@@ -181,9 +184,10 @@ export default function Visualizer({
     composer.addPass(bloomPass);
     composer.addPass(new OutputPass());
 
-    // --- MESH ---
+    // --- MESH SETUP (Dual Layer) ---
     const initialRgb = hexToRgb(colorRef.current);
 
+    // We use ONE uniforms object for BOTH meshes so they stay perfectly synced
     const uniforms = {
       u_time: { value: 0.0 },
       u_treble: { value: 0.0 },
@@ -191,19 +195,51 @@ export default function Visualizer({
       u_red: { value: initialRgb.r },
       u_green: { value: initialRgb.g },
       u_blue: { value: initialRgb.b },
+      u_opacity: { value: 1.0 }, // Dynamic opacity per mesh
     };
 
     const geometry = new THREE.IcosahedronGeometry(2, 5);
-    const material = new THREE.ShaderMaterial({
-      uniforms: uniforms,
+
+    // 1. THE FILL MESH (Inner Core)
+    // We clone uniforms to set a different opacity
+    const fillUniforms = THREE.UniformsUtils.clone(uniforms);
+    fillUniforms.u_opacity.value = 0.12; // 30% Opacity for the fill
+
+    const fillMaterial = new THREE.ShaderMaterial({
+      uniforms: fillUniforms,
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      wireframe: false,
+      transparent: true,
+      blending: THREE.AdditiveBlending, // Makes the core glow nicely
+      depthWrite: false, // Prevents z-fighting with the wireframe
+    });
+    const fillMesh = new THREE.Mesh(geometry, fillMaterial);
+
+    // 2. THE WIREFRAME MESH (Outer Cage)
+    const wireUniforms = THREE.UniformsUtils.clone(uniforms);
+    wireUniforms.u_opacity.value = 1.0; // 100% Opacity for lines
+
+    const wireMaterial = new THREE.ShaderMaterial({
+      uniforms: wireUniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       wireframe: true,
+      transparent: true,
     });
+    const wireMesh = new THREE.Mesh(geometry, wireMaterial);
 
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.y = yOffsetRef.current;
-    scene.add(mesh);
+    // Scale wireframe slightly up to prevent glitching on top of fill
+    wireMesh.scale.setScalar(1.001);
+
+    // Group them so they rotate together
+    const group = new THREE.Group();
+    group.add(fillMesh);
+    group.add(wireMesh);
+    group.position.y = yOffsetRef.current;
+
+    scene.add(group);
+    groupRef.current = group;
 
     // --- AUDIO ---
     if (!analyserRef.current) {
@@ -223,7 +259,7 @@ export default function Visualizer({
           analyser.connect(audioCtx.destination);
           sourceRef.current = source;
         } catch (e) {
-          console.log("Audio source already connected, reusing.");
+          console.log("Audio source connected");
         }
       }
     }
@@ -238,51 +274,58 @@ export default function Visualizer({
       requestRef.current = requestAnimationFrame(animate);
       analyser.getByteFrequencyData(dataArray);
 
-      // Bass
+      // Audio Math
       let bassSum = 0;
       for (let i = 0; i < 10; i++) {
         bassSum += dataArray[i];
       }
       const avgBass = bassSum / 10;
 
-      // Treble
       let trebleSum = 0;
       for (let i = 50; i < 150; i++) {
         trebleSum += dataArray[i];
       }
       const avgTreble = trebleSum / 100;
 
-      // Color & Position
+      // Color Updates
       const targetRgb = hexToRgb(colorRef.current);
-      uniforms.u_red.value += (targetRgb.r - uniforms.u_red.value) * 0.05;
-      uniforms.u_green.value += (targetRgb.g - uniforms.u_green.value) * 0.05;
-      uniforms.u_blue.value += (targetRgb.b - uniforms.u_blue.value) * 0.05;
-      mesh.position.y += (yOffsetRef.current - mesh.position.y) * 0.1;
 
-      // --- PHYSICS UPDATE (The "Drama" Tweak) ---
-      // Base scale: 0.8 (Reduced from 1.0)
-      // Expansion: Multiplied by 0.9 (Increased from 0.6)
-      // Power: 2.5 (More exponential, requires actual bass beat to trigger)
-      const scaleEffect = 0.8 + Math.pow(avgBass / 255, 2.5) * 0.9;
-      mesh.scale.setScalar(scaleEffect);
+      // Update BOTH materials
+      [fillMaterial, wireMaterial].forEach((mat) => {
+        mat.uniforms.u_red.value +=
+          (targetRgb.r - mat.uniforms.u_red.value) * 0.05;
+        mat.uniforms.u_green.value +=
+          (targetRgb.g - mat.uniforms.u_green.value) * 0.05;
+        mat.uniforms.u_blue.value +=
+          (targetRgb.b - mat.uniforms.u_blue.value) * 0.05;
 
-      uniforms.u_time.value = clock.getElapsedTime();
+        mat.uniforms.u_time.value = clock.getElapsedTime();
+        mat.uniforms.u_treble.value = THREE.MathUtils.lerp(
+          mat.uniforms.u_treble.value,
+          avgTreble,
+          0.08
+        );
+        mat.uniforms.u_bass.value = THREE.MathUtils.lerp(
+          mat.uniforms.u_bass.value,
+          avgBass,
+          0.2
+        );
+      });
 
-      // Smooth Treble / Bass LERP
-      uniforms.u_treble.value = THREE.MathUtils.lerp(
-        uniforms.u_treble.value,
-        avgTreble,
-        0.08
-      );
-      uniforms.u_bass.value = THREE.MathUtils.lerp(
-        uniforms.u_bass.value,
-        avgBass,
-        0.2
-      );
+      // Position Group
+      if (groupRef.current) {
+        groupRef.current.position.y +=
+          (yOffsetRef.current - groupRef.current.position.y) * 0.1;
 
-      const rotSpeed = 0.002 + (avgTreble / 255) * 0.05;
-      mesh.rotation.y += rotSpeed;
-      mesh.rotation.x += rotSpeed * 0.5;
+        // Physics Scale
+        const scaleEffect = 0.8 + Math.pow(avgBass / 255, 2.5) * 0.9;
+        groupRef.current.scale.setScalar(scaleEffect);
+
+        // Rotation
+        const rotSpeed = 0.002 + (avgTreble / 255) * 0.05;
+        groupRef.current.rotation.y += rotSpeed;
+        groupRef.current.rotation.x += rotSpeed * 0.5;
+      }
 
       composer.render();
     };
@@ -305,7 +348,8 @@ export default function Visualizer({
       }
       renderer.dispose();
       geometry.dispose();
-      material.dispose();
+      fillMaterial.dispose(); // Cleanup both materials
+      wireMaterial.dispose();
     };
   }, []);
 
