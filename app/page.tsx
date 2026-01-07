@@ -159,7 +159,7 @@ export default function Home() {
     if (!audioRef.current && typeof window !== "undefined") {
       audioRef.current = new Audio();
       audioRef.current.crossOrigin = "anonymous";
-      audioRef.current.loop = true;
+      audioRef.current.loop = false; // Disable loop to handle "ended" event manually
 
       const audio = audioRef.current;
 
@@ -168,12 +168,23 @@ export default function Home() {
       const setPause = () => setIsPlaying(false);
       const setLoading = () => setIsLoading(true);
       const setReady = () => setIsLoading(false);
+      const handleEnded = () => {
+        // Find next track index
+        const currentIndex = TRACKS.findIndex((t) => t.id === activeTrack.id);
+        const nextIndex = (currentIndex + 1) % TRACKS.length;
+        const nextTrack = TRACKS[nextIndex];
+
+        // Update state and scroll carousel
+        setActiveTrack(nextTrack);
+        if (emblaApi) emblaApi.scrollTo(nextIndex);
+      };
 
       audio.addEventListener("play", setPlay);
       audio.addEventListener("pause", setPause);
       audio.addEventListener("waiting", setLoading);
       audio.addEventListener("playing", setReady);
       audio.addEventListener("canplay", setReady);
+      audio.addEventListener("ended", handleEnded);
       audio.addEventListener("error", () => {
         setReady();
         setPause();
@@ -185,9 +196,10 @@ export default function Home() {
         audio.removeEventListener("waiting", setLoading);
         audio.removeEventListener("playing", setReady);
         audio.removeEventListener("canplay", setReady);
+        audio.removeEventListener("ended", handleEnded);
       };
     }
-  }, []);
+  }, [activeTrack, emblaApi]); // Added dependencies for handleEnded logic
 
   // --- 3. TRACK LOADER (Effect) ---
   // This watches 'activeTrack'. If it changes, it loads the new one.
