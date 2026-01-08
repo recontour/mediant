@@ -387,6 +387,17 @@ export default function Home() {
           </a>
         </div>
 
+        <div className="absolute top-6 right-6 pointer-events-auto">
+          <a
+            href="https://open.spotify.com/artist/0kMjM9mEwhi0IRdmW7lRpB"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-black backdrop-blur-sm border border-white/10 text-[#1DB954] hover:scale-105 transition-all duration-300 shadow-lg"
+          >
+            <FaSpotify size={24} />
+          </a>
+        </div>
+
         {/* PLAYER CARD */}
         <div className="px-6 mb-6 pointer-events-auto">
           <div
