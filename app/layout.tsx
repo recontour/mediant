@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     description: "Now on SPOTIFY",
     images: [
       {
-        url: "/meta.png",
+        url: "/meta1.png",
         width: 1200,
         height: 630,
         alt: "Mediant Preview",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Mediant",
     description: "Now on SPOTIFY",
-    images: ["/meta.png"],
+    images: ["/meta1.png"],
   },
 };
 
