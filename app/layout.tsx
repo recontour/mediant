@@ -14,12 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mediant",
-  description:
-    "MEDIANT Releases on Labels - Pleasure Records, Deepsessions Recordings.",
+  description: "Now on SPOTIFY",
   openGraph: {
     title: "Mediant",
-    description:
-      "MEDIANT Releases on Labels - Pleasure Records, Deepsessions Recordings.",
+    description: "Now on SPOTIFY",
     images: [
       {
         url: "/meta.png",
@@ -32,8 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Mediant",
-    description:
-      "MEDIANT Releases on Labels - Pleasure Records, Deepsessions Recordings.",
+    description: "Now on SPOTIFY",
     images: ["/meta.png"],
   },
 };
