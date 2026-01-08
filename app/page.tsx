@@ -9,7 +9,7 @@ import Visualizer from "./components/Visualizer";
 import icon from "./icon.png";
 
 // --- DATA ---
-const TRACKS = [
+const SOURCE_TRACKS = [
   {
     id: 0,
     title: "Among Us",
@@ -105,11 +105,19 @@ const TRACKS = [
   },
 ];
 
+// Create 3 sets for "Infinite" illusion
+const TRACKS = [
+  ...SOURCE_TRACKS.map((t) => ({ ...t, uniqueKey: `${t.id}-prev` })),
+  ...SOURCE_TRACKS.map((t) => ({ ...t, uniqueKey: `${t.id}-curr` })),
+  ...SOURCE_TRACKS.map((t) => ({ ...t, uniqueKey: `${t.id}-next` })),
+];
+
 const numberWithinRange = (number: number, min: number, max: number): number =>
   Math.min(Math.max(number, min), max);
 
 export default function Home() {
-  const [activeTrack, setActiveTrack] = useState(TRACKS[0]);
+  // Start at the beginning of the MIDDLE set (index 10)
+  const [activeTrack, setActiveTrack] = useState(TRACKS[SOURCE_TRACKS.length]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -120,9 +128,10 @@ export default function Home() {
 
   // --- 1. CAROUSEL SETUP ---
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: false, // Fixed: Disable loop to prevent boundary glitches
+    loop: false,
     align: "center",
-    containScroll: false, // Ensures start/end bounds are clean
+    containScroll: false,
+    startIndex: SOURCE_TRACKS.length, // Start at index 10 (Middle Set)
   });
 
   // --- 2. TWEEN SCALE LOGIC (The Fix) ---
@@ -160,7 +169,7 @@ export default function Home() {
           // Scale Logic: 0 (center) -> higher (edge)
           // We want: Center = 1.0, Edge = 0.8
           // Bell curve: 1 - abs(diff)
-          const tweenValue = 1 - Math.abs(diffToTarget * 1.5); // 1.5 multiplier narrows the "sweet spot"
+          const tweenValue = 1 - Math.abs(diffToTarget * 15); // 15 multiplier drastically narrows the "sweet spot"
           const clamped = numberWithinRange(tweenValue, 0, 1);
 
           // Interpolate
@@ -192,7 +201,7 @@ export default function Home() {
               innerButton.style.border = `2px solid ${trackColor}`;
               innerButton.style.boxShadow = `0 10px 40px -10px ${trackColor}60`;
             } else {
-              innerButton.style.border = `1px solid ${trackColor}20`;
+              innerButton.style.border = `none`;
               innerButton.style.boxShadow = `none`;
             }
           }
@@ -251,7 +260,10 @@ export default function Home() {
 
     // Auto-Next Logic
     const handleEnded = () => {
-      const currentIndex = TRACKS.findIndex((t) => t.id === activeTrack.id);
+      // Use uniqueKey to find the EXACT tile we are currently on
+      const currentIndex = TRACKS.findIndex(
+        (t) => t.uniqueKey === activeTrack.uniqueKey
+      );
       const nextIndex = (currentIndex + 1) % TRACKS.length;
       const nextTrack = TRACKS[nextIndex];
 
@@ -533,7 +545,7 @@ export default function Home() {
                 return (
                   // Width: 30% ensures One Center + Two Side Edges
                   <div
-                    key={track.id}
+                    key={track.uniqueKey}
                     className="flex-[0_0_30%] min-w-0 px-2 relative transition-all"
                   >
                     <button
