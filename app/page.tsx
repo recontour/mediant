@@ -400,8 +400,11 @@ export default function Home() {
 
         {/* PLAYER CARD */}
         <div className="px-6 mb-6 pointer-events-auto">
-          <div
-            className="backdrop-blur-sm bg-black/1 border border-white/10 rounded-2xl p-3 flex items-center gap-3 shadow-2xl transition-all duration-500"
+          <a
+            href={activeTrack.spotify}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="backdrop-blur-sm bg-black/1 border border-white/10 rounded-2xl p-3 flex items-center gap-3 shadow-2xl transition-all duration-500 hover:bg-black/5"
             style={{
               boxShadow: isPlaying
                 ? `0 0 40px -10px ${activeTrack.color}50`
@@ -412,8 +415,12 @@ export default function Home() {
             }}
           >
             <div
-              onClick={togglePlay}
-              className="relative w-16 h-16 rounded-sm overflow-hidden flex-shrink-0 cursor-pointer group"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                togglePlay();
+              }}
+              className="relative w-16 h-16 rounded-sm overflow-hidden flex-shrink-0 cursor-pointer group hover:scale-105 active:scale-95 transition-transform"
             >
               <Image
                 src={activeTrack.cover}
@@ -481,22 +488,14 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Spotify Button - Redirects to the currently playing song */}
-            {activeTrack.spotify && (
-              <a
-                href={activeTrack.spotify}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-auto relative w-[56px] h-[56px] rounded-sm overflow-hidden border border-white/10 shadow-lg active:scale-95 transition-transform"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Image src={icon} alt="Spotify" fill className="object-cover" />
-                <div className="absolute bottom-0.5 right-0.5 text-[#1DB954] drop-shadow-md bg-black rounded-full">
-                  <FaSpotify size={16} />
-                </div>
-              </a>
-            )}
-          </div>
+            {/* Spotify Badge (Visual Only) */}
+            <div className="ml-auto relative w-[56px] h-[56px] rounded-sm overflow-hidden border border-white/10 shadow-lg">
+              <Image src={icon} alt="Spotify" fill className="object-cover" />
+              <div className="absolute bottom-0.5 right-0.5 text-[#1DB954] drop-shadow-md bg-black rounded-full">
+                <FaSpotify size={16} />
+              </div>
+            </div>
+          </a>
         </div>
 
         {/* CAROUSEL */}
