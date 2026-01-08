@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import { EmblaCarouselType } from "embla-carousel";
+import { EmblaCarouselType, EmblaEventType } from "embla-carousel";
 import Image from "next/image";
-import { FaSpotify, FaInstagram } from "react-icons/fa"; // Make sure to install: npm install react-icons
+import { FaSpotify, FaInstagram } from "react-icons/fa";
 import Visualizer from "./components/Visualizer";
 import icon from "./icon.png";
 
@@ -105,6 +105,9 @@ const TRACKS = [
   },
 ];
 
+const numberWithinRange = (number: number, min: number, max: number): number =>
+  Math.min(Math.max(number, min), max);
+
 export default function Home() {
   const [activeTrack, setActiveTrack] = useState(TRACKS[0]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -115,12 +118,111 @@ export default function Home() {
   const [showEnter, setShowEnter] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // --- 1. CAROUSEL SETUP ---
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: false, // Fixed: Disable loop to prevent boundary glitches
+    align: "center",
+    containScroll: false, // Ensures start/end bounds are clean
+  });
+
+  // --- 2. TWEEN SCALE LOGIC (The Fix) ---
+  const tweenScale = useCallback(
+    (emblaApi: EmblaCarouselType, eventName?: EmblaEventType) => {
+      const engine = emblaApi.internalEngine();
+      const scrollProgress = emblaApi.scrollProgress();
+      const slidesInView = emblaApi.slidesInView();
+      const isScrollEvent = eventName === "scroll";
+
+      emblaApi.scrollSnapList().forEach((scrollSnap, snapIndex) => {
+        let diffToTarget = scrollSnap - scrollProgress;
+        const slidesInSnap = engine.slideRegistry[snapIndex];
+
+        slidesInSnap.forEach((slideIndex) => {
+          if (isScrollEvent && !slidesInView.includes(slideIndex)) return;
+
+          if (engine.options.loop) {
+            engine.slideLooper.loopPoints.forEach((loopItem) => {
+              const target = loopItem.target();
+
+              if (slideIndex === loopItem.index && target !== 0) {
+                const sign = Math.sign(target);
+
+                if (sign === -1) {
+                  diffToTarget = scrollSnap - (1 + scrollProgress);
+                }
+                if (sign === 1) {
+                  diffToTarget = scrollSnap + (1 - scrollProgress);
+                }
+              }
+            });
+          }
+
+          // Scale Logic: 0 (center) -> higher (edge)
+          // We want: Center = 1.0, Edge = 0.8
+          // Bell curve: 1 - abs(diff)
+          const tweenValue = 1 - Math.abs(diffToTarget * 1.5); // 1.5 multiplier narrows the "sweet spot"
+          const clamped = numberWithinRange(tweenValue, 0, 1);
+
+          // Interpolate
+          const scale = 0.8 + clamped * 0.2; // 0.8 -> 1.0
+          const opacity = 0.5 + clamped * 0.5; // 0.5 -> 1.0
+          const isCenter = clamped > 0.9;
+
+          const slideNode = emblaApi.slideNodes()[slideIndex];
+          const innerButton = slideNode.querySelector(
+            ".carousel-tile"
+          ) as HTMLElement;
+          const innerImage = slideNode.querySelector(
+            ".carousel-image"
+          ) as HTMLElement;
+
+          // Z-Index: Active pops forward
+          slideNode.style.zIndex = isCenter ? "20" : "1";
+
+          if (innerButton) {
+            // Apply scale directly
+            innerButton.style.transform = `scale(${scale})`;
+            innerButton.style.opacity = `${opacity}`;
+
+            // Border styling based on track color (we can't easily access React state here safely without closures,
+            // but we can assume the track order matches or read a data-attribute if needed.
+            // For now, let's keep the generic/static style update or use the index from closure since TRACKS is const.)
+            const trackColor = TRACKS[slideIndex].color;
+            if (isCenter) {
+              innerButton.style.border = `2px solid ${trackColor}`;
+              innerButton.style.boxShadow = `0 10px 40px -10px ${trackColor}60`;
+            } else {
+              innerButton.style.border = `1px solid ${trackColor}20`;
+              innerButton.style.boxShadow = `none`;
+            }
+          }
+
+          if (innerImage) {
+            innerImage.style.filter = isCenter
+              ? "none"
+              : "grayscale(100%) brightness(50%)";
+          }
+        });
+      });
+    },
+    []
+  );
+
   useEffect(() => {
-    // Sequence the animations
+    if (!emblaApi) return;
+
+    tweenScale(emblaApi);
+    emblaApi
+      .on("reInit", tweenScale)
+      .on("scroll", tweenScale)
+      .on("slideFocus", tweenScale);
+  }, [emblaApi, tweenScale]);
+
+  // --- 3. INTRO ANIMATION ---
+  useEffect(() => {
     const t1 = setTimeout(() => setShowWelcome(true), 500);
     const t2 = setTimeout(() => setShowHint(true), 1500);
     const t3 = setTimeout(() => setShowEnter(true), 3000);
-
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -128,90 +230,7 @@ export default function Home() {
     };
   }, []);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    align: "center",
-    skipSnaps: false,
-    dragFree: false, // Strict snapping helps stability
-    containScroll: false, // Allows the 'center' logic to work perfectly
-  });
-
-  // --- 1. VISUAL SCALER (Direct DOM for Performance) ---
-  const onScroll = useCallback((emblaApi: EmblaCarouselType) => {
-    const engine = emblaApi.internalEngine();
-    const scrollProgress = emblaApi.scrollProgress();
-    const slides = emblaApi.slideNodes();
-
-    emblaApi.scrollSnapList().forEach((scrollSnap, index) => {
-      let diffToTarget = scrollSnap - scrollProgress;
-      const slidesInSnap = engine.slideRegistry[index];
-
-      slidesInSnap.forEach((slideIndex) => {
-        if (engine.options.loop) {
-          engine.slideLooper.loopPoints.forEach((loopItem) => {
-            const target = loopItem.target();
-            if (slideIndex === loopItem.index && target !== 0) {
-              const sign = Math.sign(target);
-              if (sign === -1) diffToTarget = scrollSnap - (1 + scrollProgress);
-              if (sign === 1) diffToTarget = scrollSnap + (1 - scrollProgress);
-            }
-          });
-        }
-      });
-
-      // MATH: Create a bell curve for the scale
-      const tweenValue = 1 - Math.abs(diffToTarget * 1.5); // 1.5 multiplier tightens the curve
-      const clampedTween = Math.max(0, Math.min(1, tweenValue));
-
-      // Scale: 0.85 (edges) -> 1.0 (center)
-      const scale = 0.85 + clampedTween * 0.15;
-      const opacity = 0.5 + clampedTween * 0.5;
-      const isCenter = clampedTween > 0.9; // Strict center check
-
-      const slideNode = slides[index];
-
-      // We set z-index so the center tile visually pops OVER the side tiles
-      slideNode.style.zIndex = isCenter ? "10" : "1";
-
-      const innerButton = slideNode.querySelector(
-        ".carousel-tile"
-      ) as HTMLElement;
-      const innerImage = slideNode.querySelector(
-        ".carousel-image"
-      ) as HTMLElement;
-
-      if (innerButton) {
-        // PERFORMANCE: Direct transform update.
-        // Ensure CSS does NOT have 'transition: all' or 'transition: transform'
-        innerButton.style.transform = `scale(${scale})`;
-        innerButton.style.opacity = `${opacity}`;
-
-        const trackColor = TRACKS[index].color;
-        if (isCenter) {
-          innerButton.style.border = `2px solid ${trackColor}`;
-          innerButton.style.boxShadow = `0 10px 40px -10px ${trackColor}60`;
-        } else {
-          innerButton.style.border = `1px solid ${trackColor}20`;
-          innerButton.style.boxShadow = `none`;
-        }
-      }
-
-      if (innerImage) {
-        innerImage.style.filter = isCenter
-          ? "none"
-          : "grayscale(100%) brightness(50%)";
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onScroll(emblaApi);
-    emblaApi.on("scroll", () => onScroll(emblaApi));
-    emblaApi.on("reInit", () => onScroll(emblaApi));
-  }, [emblaApi, onScroll]);
-
-  // --- 2. AUDIO ENGINE & EVENT LISTENERS ---
+  // --- 4. AUDIO ENGINE ---
   useEffect(() => {
     if (!audioRef.current && typeof window !== "undefined") {
       audioRef.current = new Audio();
@@ -220,7 +239,7 @@ export default function Home() {
     }
   }, []);
 
-  // Attach Event Listeners
+  // Event Listeners
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -236,7 +255,6 @@ export default function Home() {
       const nextIndex = (currentIndex + 1) % TRACKS.length;
       const nextTrack = TRACKS[nextIndex];
 
-      // Update active track AND scroll to it
       setActiveTrack(nextTrack);
       if (emblaApi) emblaApi.scrollTo(nextIndex);
     };
@@ -262,7 +280,7 @@ export default function Home() {
     };
   }, [activeTrack, emblaApi]);
 
-  // --- 3. TRACK LOADER ---
+  // Track Loader
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -278,7 +296,7 @@ export default function Home() {
     }
   }, [activeTrack, hasInteracted]);
 
-  // --- 4. INTERACTION LOGIC ---
+  // --- 5. INTERACTIONS ---
   const handleTileClick = (index: number) => {
     if (!emblaApi) return;
     setHasInteracted(true);
@@ -287,13 +305,16 @@ export default function Home() {
     const selectedTrack = TRACKS[index];
 
     if (!isCentered) {
-      // Just Scroll
+      // Scroll to it
       emblaApi.scrollTo(index);
     } else {
-      // Action
+      // It's already center.
+      // If it's the playing song, toggle play.
+      // If it's a different song (but somehow centered?), play it.
       if (selectedTrack.id === activeTrack.id) {
         togglePlay();
       } else {
+        // This handles the "I scrolled to B, now I click B to play it" case
         setActiveTrack(selectedTrack);
       }
     }
@@ -488,7 +509,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Spotify Badge (Visual Only) */}
+            {/* Spotify Badge */}
             <div className="ml-auto relative w-[56px] h-[56px] rounded-sm overflow-hidden border border-white/10 shadow-lg">
               <Image src={icon} alt="Spotify" fill className="object-cover" />
               <div className="absolute bottom-0.5 right-0.5 text-[#1DB954] drop-shadow-md bg-black rounded-full">
@@ -510,7 +531,7 @@ export default function Home() {
                 const isSelected = activeTrack.id === track.id;
 
                 return (
-                  // Width: 65% ensures One Center + Two Side Edges on mobile
+                  // Width: 30% ensures One Center + Two Side Edges
                   <div
                     key={track.id}
                     className="flex-[0_0_30%] min-w-0 px-2 relative transition-all"
@@ -518,9 +539,7 @@ export default function Home() {
                     <button
                       onClick={() => handleTileClick(index)}
                       className="carousel-tile relative w-full aspect-square rounded-sm overflow-hidden transition-colors duration-300"
-                      // NOTE: We REMOVED transition-all/transition-transform to prevent shaking.
-                      // Only opacity and border/colors are animated by CSS.
-                      // Transform is handled 100% by JS in onScroll.
+                      // NOTE: Visual scaling is handled by tweenScale via direct DOM manipulation for performance
                     >
                       <Image
                         src={track.cover}
