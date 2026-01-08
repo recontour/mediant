@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mediant",
-  description: "Now on SPOTIFY",
+  description: "Is live SPOTIFY",
   openGraph: {
     title: "Mediant",
-    description: "Now on SPOTIFY",
+    description: "Is live SPOTIFY",
     images: [
       {
         url: "/meta1.png",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Mediant",
-    description: "Now on SPOTIFY",
+    description: "Is live SPOTIFY",
     images: ["/meta1.png"],
   },
 };
